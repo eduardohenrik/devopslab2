@@ -5,19 +5,54 @@ language: python
 python:
   - "3.7.9"
 
-# Instalação de Módulos que são necessários para a Aplicação.
-install:
-  - pip install flask
+os: linux
+dist: xenial
 
-# Defini o script de Teste que deve rodar toda vez que o código for alterado.
-script:
-  - python -m unittest -v test
+before_install:
+- openssl aes-256-cbc -K $encrypted_42ba9e6778af_key -iv $encrypted_42ba9e6778af_iv
+  -in labdevopscloud-gaby-e21d31214aba.json.enc -out ../labdevopscloud-gaby-e21d31214aba.json
+  -d
 
-# Definir o Deploy no Heroku
-deploy:
-  provider: heroku
-  api_key: $HEROKU_API_KEY
-  edge: true 
-  app: devopslab-gabrieladias
-  on:
-      branch: main
+jobs:
+  include:
+    - stage: Build
+
+      name: "Testes Unitarios"
+      # Instalação de Módulos que são necessários para a Aplicação.
+      install:
+        - pip install flask flask-wtf coverage
+      script:  # Defini o script de Teste que deve rodar toda vez que o código for alterado.
+        - coverage run test.py || travis_terminate 1;
+        - coverage report app.py || travis_terminate 1;
+        - coverage xml app.py || travis_terminate 1;
+
+    - stage: STG Deploy
+      script: skip
+      # Definir o Deploy no Heroku
+      deploy:
+        provider: heroku
+        strategy: api
+        api_key: $HEROKU_API_KEY
+        edge: true
+        app: devopslab-gabrieladias
+        on:
+          branch: main
+
+    - stage: STG TEST
+      script:
+        - curl https://devopslab-gabrieladias.herokuapp.com/ | grep Hello || travis_terminate 1;
+
+    - stage: PROD Deploy
+      script: skip
+      # Definir o Deploy no Google Cloud
+      deploy:
+        provider: gae
+        keyfile: ../projeto01gaby-23a03732798b.json
+        project: labdevopscloud-gaby
+        on:
+          branch: main
+
+    - stage: PROD TEST
+      script:
+        - curl https://labdevopscloud-gaby.uc.r.appspot.com/ | grep Hello || travis_terminate 1;
+
