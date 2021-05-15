@@ -47,7 +47,7 @@ jobs:
       # Definir o Deploy no Google Cloud
       deploy:
         provider: gae
-        keyfile: ../projeto01gaby-23a03732798b.json
+        keyfile: ../labdevopscloud-gaby-e21d31214aba.json
         project: labdevopscloud-gaby
         on:
           branch: main
